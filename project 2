@@ -1,0 +1,134 @@
+
+.data
+	data: .space 1001
+	output: .asciiz "\n"
+	notvalid: .asciiz "Invalid input"
+	.text
+	
+	main:
+	
+	li $v0, 8
+	la $a0, data
+	li $a1, 1001
+	syscall
+	jal first
+	j finish
+	#asks user for input 
+	
+	first:
+	la $t0,data
+	add $t0,$t0,$t1
+	lb $s0, ($t0)
+	beq $s0, 0, finish
+	beq $s0, 9, skip
+	beq $s0, 32, skip
+	move $t6, $t1
+	j Next
+	
+	skip:
+	addi $t1, $t1,1 
+	j first
+	#First loop to iterate through the characters and adding 1 to counter 
+	
+	Next:
+	li $t7, -1
+	la $t0,data
+	add $t0,$t0,$t1
+	lb $s0, ($t0)
+	bge $t2, 5, invalid
+	bge $t3, 1, invalid
+	addi $t1, $t1, 1
+	j check
+	#Second loop to iterate through and adding 1 to counter 
+	
+	check:
+	beq $s0, 9, gap
+	beq $s0, 32, gap
+	beq $s0, 10, convert
+	beq $s0, 0, convert
+	ble $s0, 47, different
+	ble $s0, 57, int
+	ble $s0, 64, different
+	ble $s0, 84, int
+	ble $s0, 96, different
+	ble $s0, 116, int
+	bge $s0, 117, different
+	#Checking each character and then pointing it to the correlating function
+	
+	different:
+	j invalid
+	gap:
+	
+	addi $t3,$t3, -1
+	j Next 
+	#Checking for special cases in the characters entered 
+	
+	int: 
+	addi $t2, $t2, 1 
+	mul $t3, $t3, $t7
+	j Next
+	
+	
+	
+	convert:
+	la $t0, data
+	add $t0,$t0,$t6
+	lb $s0, ($t0)
+	addi $t2,$t2, -1
+	addi $t6, $t6, 1
+	blt $t2,0,done
+	move $t8, $t2 
+	ble $s0, 57, num
+	ble $s0, 80, upper
+	ble $s0, 112, lower
+	#Converts the characters accordingly 
+	
+	num:
+	li $t5, 48
+	sub $s0, $s0, $t5
+	beq $t2, 0, together
+	li $t9, 30
+	j exp
+	#Checks the number 
+	
+	upper:
+	li $t5, 55
+	sub $s0, $s0, $t5
+	beq $t2, 0, together
+	li $t9, 30
+	j exp
+	#checks if uppercase 
+	
+	lower:
+	li $t5, 87
+	sub $s0, $s0, $t5
+	beq $t2, 0, together
+	li $t9, 30
+	j exp
+	#checks if lowercase 
+	
+	exp:
+	ble $t8, 1, together
+	mul $t9, $t9, 30 
+	addi $t8, $t8, -1
+	j exp
+	
+	together:
+	mul $s2, $t9, $s0
+	add $s1, $s1, $s2
+	li $t9, 1 
+	j convert 
+	#Combines it 
+	
+	finish:
+	li $v0, 4
+	la $a0, output
+	syscall
+	
+	li $v0, 1
+	
+	move $a0, $s1
+	syscall
+	
+	j Exit 
+
